@@ -1,12 +1,3 @@
-<script>
-import Temp from "@/components/temp.vue";
-
-export default {
-  name: "MainDashboard",
-  components: { Temp }
-}
-</script>
-
 <template>
   <div class="common-layout">
     <el-container>
@@ -34,16 +25,16 @@ export default {
         <el-container>
           <el-main style="max-height:50%;" class="main">
             <el-card style="width: 20%;height: 45%;">
-              
+
             </el-card>
             <el-card style="width: 80%;height: 45%;">
-              
+              {{ carData }}
             </el-card>
             <el-card style="width: 20%;height: 45%">
-              
+
             </el-card>
             <el-card style="width: 80%;height: 45%;">
-              
+
             </el-card>
           </el-main>
           <el-footer style="height:50%;" class="footer">
@@ -56,6 +47,53 @@ export default {
   </div>
 </template>
 
+<script>
+import http from '../axios/index.js';
+import { getTempList, getCurTemp } from '../axios/api/api.js'
+import Temp from "@/components/temp.vue";
+
+export default {
+  name: "MainDashboard",
+  components: { Temp },
+  // data() 返回的属性将会成为响应式的状态
+  // 并且暴露在 `this` 上
+  data() {
+    return {
+      count: 0,
+      tempList: [], // 用于存储温度列表的数据
+      curTemp: null, // 用于存储当前温度的数据
+    }
+  },
+
+  // methods 是一些用来更改状态与触发更新的函数
+  // 它们可以在模板中作为事件处理器绑定
+  methods: {
+    increment() {
+      this.count++
+    }
+  },
+
+  data() {
+    return {
+      carData: null,
+    };
+  },
+  mounted() {
+    this.fetchCarData();
+  },
+  methods: {
+    async fetchCarData() {
+      try {
+        const response = await http.get('/car/get');
+        this.carData = response.data;
+      } catch (error) {
+        console.error('Error fetching car data:', error);
+        // 处理错误情况，例如显示错误消息
+      }
+    },
+  },
+};
+</script>
 
 <style scoped>
 .common-layout {

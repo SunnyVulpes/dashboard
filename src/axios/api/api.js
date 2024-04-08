@@ -3,6 +3,7 @@ import http from "../index.js"
 export async function getTempList() {
     try {
         const res = await http.get("/temperature/list")
+        console.log(res.data)
         return res.data.data
     }catch (err) {
         console.log(err)

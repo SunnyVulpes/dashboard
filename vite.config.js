@@ -12,5 +12,15 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
-  }
+  },
+  server: {
+    proxy: {
+      '/car': {
+        target: 'http://124.221.53.69:8081',
+        changeOrigin: true,
+      },
+    },
+  },
 })
+
+
