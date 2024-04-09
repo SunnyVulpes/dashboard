@@ -7,8 +7,8 @@
           <div class="aside-photo">
             <el-card style="width: 100%;">
 
-              <img src="https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
-                style="width: 50%;;" />
+              <img :src=photourl 
+                style="width: 50%;height:250px;" />
               <img src="https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
                 style="width: 50%" />
               <img src="https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
@@ -28,10 +28,15 @@
 
             </el-card>
             <el-card style="width: 80%;height: 45%;">
-              {{ carData }}
+              {{ tempList }}
+              {{ curTemp }}
+              {{ humidityList }}
+              {{ curhumidity }}
+              {{ countpeople }}
+              
             </el-card>
             <el-card style="width: 20%;height: 45%">
-
+              {{ photourlarr }}
             </el-card>
             <el-card style="width: 80%;height: 45%;">
 
@@ -49,7 +54,7 @@
 
 <script>
 import http from '../axios/index.js';
-import { getTempList, getCurTemp } from '../axios/api/api.js'
+import { getTempList, getCurTemp,getHumidityList,getCurHumidity,countPeople,getPhotoUrl,getPhotoUrl_4} from '../axios/api/api.js'
 import Temp from "@/components/temp.vue";
 
 export default {
@@ -60,37 +65,44 @@ export default {
   data() {
     return {
       count: 0,
-      tempList: [], // 用于存储温度列表的数据
+      curtemp:0,
+      tempList: [],
+      humidityList:[], // 用于存储温度列表的数据
       curTemp: null, // 用于存储当前温度的数据
+      curhumidity:0,
+      countpeople:0,
+      photourl:[],
+      photourlarr:[],
     }
   },
 
   // methods 是一些用来更改状态与触发更新的函数
   // 它们可以在模板中作为事件处理器绑定
+  mounted(){
+    getTempList().then((res)=>{
+      this.tempList = res
+    })
+    getCurTemp().then((res)=>{
+      this.curTemp = res
+    })
+    getHumidityList().then((res)=>{
+      this.humidityList=res
+    })
+    getCurHumidity().then((res)=>{
+      this.curhumidity = res
+    })
+    countPeople().then((res)=>{
+      this.countpeople = res
+    })
+    getPhotoUrl().then((res)=>{
+      this.photourl = res
+    })
+    getPhotoUrl_4().then((res)=>{
+      this.photourlarr=res
+    })
+  },
   methods: {
-    increment() {
-      this.count++
-    }
-  },
-
-  data() {
-    return {
-      carData: null,
-    };
-  },
-  mounted() {
-    this.fetchCarData();
-  },
-  methods: {
-    async fetchCarData() {
-      try {
-        const response = await http.get('/car/get');
-        this.carData = response.data;
-      } catch (error) {
-        console.error('Error fetching car data:', error);
-        // 处理错误情况，例如显示错误消息
-      }
-    },
+   
   },
 };
 </script>
