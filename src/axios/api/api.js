@@ -3,7 +3,6 @@ import http from "../index.js"
 export async function getTempList() {
     try {
         const res = await http.get("/api/temperature/getlist")
-        console.log(res.data.data)
         return res.data.data
         
     }catch (err) {
@@ -69,6 +68,36 @@ export async function getPhotoUrl_4() {
     try {
         const res = await http.get("/api/photo/geturl")
         return res.data
+    }catch (err) {
+        console.log(err)
+        throw err
+    }
+}
+
+export async function getPeopleNum() {
+    try {
+        const res = await http.get("/api/people/get")
+        return res.data.data
+    }catch (err) {
+        console.log(err)
+        throw err
+    }
+}
+
+export async function getlog() {
+    try {
+        const res = await http.get("/api/log/get")
+        return res.data.data
+    }catch (err) {
+        console.log(err)
+        throw err
+    }
+}
+
+export async function getspeed() {
+    try {
+        const res = await http.get("/api/car/get")
+        return res.data.data
     }catch (err) {
         console.log(err)
         throw err

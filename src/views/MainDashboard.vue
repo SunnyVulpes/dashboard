@@ -7,8 +7,7 @@
           <div class="aside-photo">
             <el-card style="width: 100%;">
 
-              <img :src=photourl 
-                style="width: 50%;height:250px;" />
+              <img :src=photourl style="width: 50%;height:250px;" />
               <img src="https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
                 style="width: 50%" />
               <img src="https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
@@ -18,44 +17,61 @@
             </el-card>
 
           </div>
-          <el-card style="width:100%;">
+          <el-card style="width:100%;height: 290px;">
+
+            <div style="display: flex;justify-content: center;align-items: center;margin-top: 20px;">
+              <div ref="speedpanel0" style="width:250px;height: 250px;"></div>
+              <div ref="speedpanel1" style="width:250px;height: 250px;"></div>
+            </div>
 
           </el-card>
         </el-aside>
         <el-container>
           <el-main style="max-height:50%;" class="main">
             <el-card style="width: 20%;height: 45%;">
-
+              <div style="display: flex;justify-content: center;align-items: center;">
+                <div ref="temppanel" style="width:150px;height: 150px;scale: 1.4;"></div>
+              </div>
             </el-card>
+            <!-- 温度折线图 -->
             <el-card style="width: 80%;height: 45%;">
-              {{ tempList }}
-              {{ curTemp }}
-              {{ humidityList }}
-              {{ curhumidity }}
-              {{ countpeople }}
-              
+              <div style="display: flex;justify-content: center;align-items: center;margin-top: -60px;">
+                <div ref="tempLineChart" style="width: 1400px;height: 250px;"></div>
+              </div>
             </el-card>
             <el-card style="width: 20%;height: 45%">
-              {{ photourlarr }}
+              <div style="display: flex;justify-content: center;align-items: center;">
+                <div ref="humiditypanel" style="width:150px;height: 150px;scale: 1.4;"></div>
+              </div>
             </el-card>
             <el-card style="width: 80%;height: 45%;">
-
+              <div style="display: flex;justify-content: center;align-items: center;margin-top: -60px;">
+                <div ref="humidityLineChart" style="width: 1400px;height: 250px;"></div>
+              </div>
             </el-card>
           </el-main>
           <el-footer style="height:50%;" class="footer">
-            <el-card style="width: 70%;height: 100%;"></el-card>
-            <el-card style="width: 30%;height: 100%;"></el-card>
+            <!-- 这里是日志模块 -->
+            <el-card style="width: 70%;height: 100%;">
+              {{ logList }}
+            </el-card>
+            <!-- 人数 -->
+            <el-card style="width: 30%;height: 100%;">
+              <div style="display: flex;justify-content: center;align-items: center;margin-top: 40px;">
+                <div ref="peopleNumChart" style="width:250px;height: 250px;scale: 1.3;"></div>
+              </div>
+            </el-card>
           </el-footer>
         </el-container>
       </el-container>
     </el-container>
   </div>
 </template>
-
 <script>
-import http from '../axios/index.js';
-import { getTempList, getCurTemp,getHumidityList,getCurHumidity,countPeople,getPhotoUrl,getPhotoUrl_4} from '../axios/api/api.js'
+import * as echarts from "echarts";
+import { getspeed,getTempList, getCurTemp, getHumidityList, getCurHumidity, countPeople, getPhotoUrl, getPhotoUrl_4, getPeopleNum, getlog } from '../axios/api/api.js'
 import Temp from "@/components/temp.vue";
+import { ElDatePicker } from "element-plus";
 
 export default {
   name: "MainDashboard",
@@ -64,45 +80,589 @@ export default {
   // 并且暴露在 `this` 上
   data() {
     return {
+      tempChart: null,
+      humidityChart: null,
+      tempLineChart: null,
+      humidityLineChart: null,
+      peopleNumChart: null,
+      myChart0: null,
+      myChart1: null,
       count: 0,
-      curtemp:0,
       tempList: [],
-      humidityList:[], // 用于存储温度列表的数据
-      curTemp: null, // 用于存储当前温度的数据
-      curhumidity:0,
-      countpeople:0,
-      photourl:[],
-      photourlarr:[],
+      humidityList: [], // 用于存储温度列表的数据
+      curTemp: 0, // 用于存储当前温度的数据
+      curhumidity: 0,
+      photourl: [],
+      photourlarr: [],
+      peoplenum: 0,
+      logList: [],
+      carspeed:0,
     }
   },
 
   // methods 是一些用来更改状态与触发更新的函数
   // 它们可以在模板中作为事件处理器绑定
-  mounted(){
-    getTempList().then((res)=>{
-      this.tempList = res
-    })
-    getCurTemp().then((res)=>{
-      this.curTemp = res
-    })
-    getHumidityList().then((res)=>{
-      this.humidityList=res
-    })
-    getCurHumidity().then((res)=>{
-      this.curhumidity = res
-    })
-    countPeople().then((res)=>{
-      this.countpeople = res
-    })
-    getPhotoUrl().then((res)=>{
-      this.photourl = res
-    })
-    getPhotoUrl_4().then((res)=>{
-      this.photourlarr=res
-    })
+  mounted() {
+    this.initCharts()
+    this.loadData()
+    this.myEcharts()
   },
   methods: {
-   
+    initCharts() {
+      this.tempChart = echarts.init(this.$refs.temppanel);
+      this.humidityChart = echarts.init(this.$refs.humiditypanel);
+      this.tempLineChart = echarts.init(this.$refs.tempLineChart);
+      this.humidityLineChart = echarts.init(this.$refs.humidityLineChart);
+      this.peopleNumChart = echarts.init(this.$refs.peopleNumChart);
+      this.myChart0 = echarts.init(this.$refs.speedpanel0);
+      this.myChart1 = echarts.init(this.$refs.speedpanel1);
+    },
+    loadData() {
+      getTempList().then((res) => {
+        this.tempList = res
+      })
+      getCurTemp().then((res) => {
+        this.curTemp = res
+      })
+      getHumidityList().then((res) => {
+        this.humidityList = res
+      })
+      getCurHumidity().then((res) => {
+        this.curhumidity = res
+      })
+      countPeople().then((res) => {
+        this.countpeople = res
+      })
+      getPhotoUrl().then((res) => {
+        this.photourl = res
+      })
+      getPhotoUrl_4().then((res) => {
+        this.photourlarr = res
+      })
+      getPeopleNum().then((res) => {
+        this.peoplenum = res
+      })
+      getlog().then((res) => {
+        this.logList = res
+      })
+      getspeed().then((res) => {
+        this.carspeed = res.speed
+      })
+    },
+    myEcharts() {
+      // 基于准备好的dom，初始化echarts实例
+
+      let that = this
+      let oneHour = 60 * 60 * 1000;  // 一小时的毫秒数
+      let oneMinu = 60 * 1000;  // 一分钟的毫秒数
+      let now = new Date();
+      let base = +now - oneHour;  // 当前时间减去一小时
+      let date = this.tempList.map(item => item.updateTime);
+      let data = this.tempList.map(item => item.temperature);
+      let humiditydata = this.humidityList.map(item => item.shidu);
+
+      // setInterval(() => {
+      //   this.curTemp++; // 每秒自增
+      // }, 1000); // 设置定时器，每1000毫秒（即1秒）执行一次
+
+      // 指定图表的配置项和数据
+      this.myChart0.setOption({
+        series: [
+          {
+            type: 'gauge',
+            progress: {
+              show: true,
+              width: 12
+            },
+            axisLine: {
+              lineStyle: {
+                width: 12
+              }
+            },
+            axisTick: {
+              show: false
+            },
+            splitLine: {
+              length: 10,
+              lineStyle: {
+                width: 1.5,
+                color: '#999'
+              }
+            },
+            axisLabel: {
+              distance: 15,
+              color: '#999',
+              fontSize: 12
+            },
+            anchor: {
+              show: true,
+              showAbove: true,
+              size: 15,
+              itemStyle: {
+                borderWidth: 6
+              }
+            },
+            title: {
+              show: false
+            },
+            detail: {
+              valueAnimation: true,
+              fontSize: 18,
+              offsetCenter: [0, '50%']
+            },
+            data: [
+              {
+                value: this.carspeed
+              }
+            ]
+          }
+        ]
+      });
+      this.myChart1.setOption({
+        series: [
+          {
+            type: 'gauge',
+            progress: {
+              show: true,
+              width: 12
+            },
+            axisLine: {
+              lineStyle: {
+                width: 12
+              }
+            },
+            axisTick: {
+              show: false
+            },
+            splitLine: {
+              length: 10,
+              lineStyle: {
+                width: 1.5,
+                color: '#999'
+              }
+            },
+            axisLabel: {
+              distance: 15,
+              color: '#999',
+              fontSize: 12
+            },
+            anchor: {
+              show: true,
+              showAbove: true,
+              size: 15,
+              itemStyle: {
+                borderWidth: 6
+              }
+            },
+            title: {
+              show: false
+            },
+            detail: {
+              valueAnimation: true,
+              fontSize: 18,
+              offsetCenter: [0, '50%']
+            },
+            data: [
+              {
+                value: this.curTemp
+              }
+            ]
+          }
+        ]
+      });
+      this.tempChart.setOption({
+        series: [
+          {
+            type: 'gauge',
+            center: ['50%', '60%'],
+            startAngle: 200,
+            endAngle: -20,
+            min: 0,
+            max: 60,
+            splitNumber: 12,
+            itemStyle: {
+              color: '#FFAB91'
+            },
+            progress: {
+              show: true,
+              width: 10
+            },
+            pointer: {
+              show: false
+            },
+            axisLine: {
+              lineStyle: {
+                width: 30
+              }
+            },
+            axisTick: {
+              distance: -15,
+              splitNumber: 5,
+              lineStyle: {
+                width: 2,
+                color: '#999'
+              }
+            },
+            splitLine: {
+              distance: -17,
+              length: 5,
+              lineStyle: {
+                width: 3,
+                color: '#999'
+              }
+            },
+            axisLabel: {
+              distance: -5,
+              color: '#999',
+              fontSize: 8
+            },
+            anchor: {
+              show: false
+            },
+            title: {
+              show: false
+            },
+            detail: {
+              valueAnimation: true,
+              width: '60%',
+              lineHeight: 20,
+              borderRadius: 8,
+              offsetCenter: [0, '-10%'],
+              fontSize: 13,
+              fontWeight: 'bolder',
+              formatter: '{value} °C',
+              color: 'inherit'
+            },
+            data: [
+              {
+                value: this.curTemp
+              }
+            ]
+          },
+          {
+            type: 'gauge',
+            center: ['50%', '60%'],
+            startAngle: 200,
+            endAngle: -20,
+            min: 0,
+            max: 60,
+            itemStyle: {
+              color: '#FD7347'
+            },
+            progress: {
+              show: true,
+              width: 3
+            },
+            pointer: {
+              show: false
+            },
+            axisLine: {
+              show: false
+            },
+            axisTick: {
+              show: false
+            },
+            splitLine: {
+              show: false
+            },
+            axisLabel: {
+              show: false
+            },
+            detail: {
+              show: false
+            },
+            data: [
+              {
+                value: 20
+              }
+            ]
+          }
+        ]
+      })
+      this.humidityChart.setOption({
+        series: [
+          {
+            type: 'gauge',
+            center: ['50%', '60%'],
+            startAngle: 200,
+            endAngle: -20,
+            min: 0,
+            max: 90,
+            splitNumber: 12,
+            itemStyle: {
+              color: '#B0E0E6'
+            },
+            progress: {
+              show: true,
+              width: 10
+            },
+            pointer: {
+              show: false
+            },
+            axisLine: {
+              lineStyle: {
+                width: 30
+              }
+            },
+            axisTick: {
+              distance: -15,
+              splitNumber: 5,
+              lineStyle: {
+                width: 2,
+                color: '#999'
+              }
+            },
+            splitLine: {
+              distance: -17,
+              length: 5,
+              lineStyle: {
+                width: 3,
+                color: '#999'
+              }
+            },
+            axisLabel: {
+              distance: -5,
+              color: '#999',
+              fontSize: 8
+            },
+            anchor: {
+              show: false
+            },
+            title: {
+              show: false
+            },
+            detail: {
+              valueAnimation: true,
+              width: '60%',
+              lineHeight: 20,
+              borderRadius: 8,
+              offsetCenter: [0, '-10%'],
+              fontSize: 13,
+              fontWeight: 'bolder',
+              formatter: '{value} %',
+              color: 'inherit'
+            },
+            data: [
+              {
+                value: this.curhumidity
+              }
+            ]
+          },
+          {
+            type: 'gauge',
+            center: ['50%', '60%'],
+            startAngle: 200,
+            endAngle: -20,
+            min: 0,
+            max: 90,
+            itemStyle: {
+              color: '#87CEEB'
+            },
+            progress: {
+              show: true,
+              width: 3
+            },
+            pointer: {
+              show: false
+            },
+            axisLine: {
+              show: false
+            },
+            axisTick: {
+              show: false
+            },
+            splitLine: {
+              show: false
+            },
+            axisLabel: {
+              show: false
+            },
+            detail: {
+              show: false
+            },
+            data: [
+              {
+                value: 20
+              }
+            ]
+          }
+        ]
+      })
+      this.tempLineChart.setOption({
+        tooltip: {
+          trigger: 'axis',
+          position: function (pt) {
+            return [pt[0], '10%'];
+          }
+        },
+
+        xAxis: {
+          type: 'category',
+          boundaryGap: false,
+          data: date,  // 使用上面生成的 date 数组
+          axisLabel: {
+            fontSize: 10,  // 调整 X 轴标签字体大小
+            formatter: function (value) {
+              return value;  // 直接返回已格式化的时间字符串
+            }
+          }
+        },
+
+        yAxis: {
+          type: 'value',
+          min: 15,
+          max: 25,
+          interval: 1,
+          axisLabel: {
+            fontSize: 10  // 调整 Y 轴标签字体大小
+          }
+        },
+
+        series: [
+          {
+            name: 'Fake Data',
+            type: 'line',
+            symbol: 'none',
+            sampling: 'lttb',
+            itemStyle: {
+              color: 'rgb(255, 70, 131)'
+            },
+
+            areaStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                {
+                  offset: 0,
+                  color: 'rgb(255, 158, 68)'
+                },
+                {
+                  offset: 1,
+                  color: 'rgb(255, 70, 131)'
+                }
+              ])
+            },
+            data: data
+          }
+        ]
+      })
+      this.humidityLineChart.setOption({
+        tooltip: {
+          trigger: 'axis',
+          position: function (pt) {
+            return [pt[0], '10%'];
+          }
+        },
+
+        xAxis: {
+          type: 'category',
+          boundaryGap: false,
+          data: date,  // 使用上面生成的 date 数组
+          axisLabel: {
+            fontSize: 10,  // 调整 X 轴标签字体大小
+            formatter: function (value) {
+              return value;  // 直接返回已格式化的时间字符串
+            }
+          }
+        },
+
+        yAxis: {
+          type: 'value',
+          min: 55,
+          max: 65,
+          interval: 1,
+          axisLabel: {
+            fontSize: 10  // 调整 Y 轴标签字体大小
+          }
+        },
+
+        series: [
+          {
+            name: 'Fake Data',
+            type: 'line',
+            symbol: 'none',
+            sampling: 'lttb',
+            itemStyle: {
+              color: '#87CEEB'
+            },
+
+            areaStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                {
+                  offset: 0,
+                  color: '#B0E0E6'
+                },
+                {
+                  offset: 1,
+                  color: 'rgb(255, 70, 131)'
+                }
+              ])
+            },
+            data: humiditydata
+          }
+        ]
+      })
+      this.peopleNumChart.setOption({
+        tooltip: {
+          trigger: 'item'
+        },
+        legend: {
+          show: false,
+        },
+        series: [
+          {
+            name: 'Access From',
+            type: 'pie',
+            radius: ['40%', '70%'],
+            avoidLabelOverlap: false,
+            label: {
+              show: true,  // 确保标签总是显示
+              position: 'center',  // 将标签位置设置在中心
+              formatter: function (params) {
+                // 这里直接返回了 peoplenum 的值和标签
+                // 注意: 这里的 this.peoplenum 需要根据你的 Vue 组件中的数据属性来调整
+                return `人数${this.peoplenum}/10`;
+              }.bind(this),  // 使用 .bind(this) 以确保函数内部可以访问 Vue 组件的数据
+              fontSize: 14,
+              fontWeight: 'bold',
+            },
+            emphasis: {
+              label: {
+                show: true,
+                fontSize: 14,
+                fontWeight: 'bold'
+              }
+            },
+            labelLine: {
+              show: false
+            },
+            data: [
+              { value: this.peoplenum, name: 'nowpeople', itemStyle: { color: '#FFD700' } },  // 使用 peoplenum 作为值
+              { value: 10 - this.peoplenum, name: 'Direct', itemStyle: { color: '#FF4500' } }  // 假设总数是 10，计算 Direct 的值
+            ]
+          }
+        ]
+      }
+      )
+    }
+  },
+  watch: {
+    curTemp(newVal) {
+      this.myEcharts()
+    },
+    curhumidity(newVal) {
+      this.myEcharts()
+    },
+    peoplenum(newVal) {
+      this.myEcharts()
+    },
+    carspeed(newVal) {
+      this.myEcharts()
+    },
+    humidityList(newVal) {
+      this.myEcharts()
+    },
+    tempList(newVal) {
+      this.myEcharts()
+    },
   },
 };
 </script>
@@ -121,7 +681,6 @@ export default {
 }
 
 .aside {
-  background-color: blue;
   width: 30%;
   height: 90vh;
 }
