@@ -1,7 +1,9 @@
 <template>
   <div class="common-layout">
     <el-container>
-      <el-header class="header">Header</el-header>
+      <el-header class="header">
+        <p style="margin-top: 30px">智能Dashboard</p>
+      </el-header>
       <el-container>
         <el-aside class="aside">
           <div class="aside-photo">
@@ -29,23 +31,23 @@
         <el-container>
           <el-main style="max-height:50%;" class="main">
             <el-card style="width: 20%;height: 45%;">
-              <div style="display: flex;justify-content: center;align-items: center;">
-                <div ref="temppanel" style="width:150px;height: 150px;scale: 1.4;"></div>
+              <div style="display: flex;justify-content: center;align-items: center;margin-top: -20px">
+                <div ref="temppanel" style="width:250px;height: 250px;"></div>
               </div>
             </el-card>
             <!-- 温度折线图 -->
             <el-card style="width: 80%;height: 45%;">
-              <div style="display: flex;justify-content: center;align-items: center;margin-top: -60px;">
+              <div style="display: flex;justify-content: center;align-items: center;margin-top: -30px;">
                 <div ref="tempLineChart" style="width: 1400px;height: 250px;"></div>
               </div>
             </el-card>
             <el-card style="width: 20%;height: 45%">
-              <div style="display: flex;justify-content: center;align-items: center;">
-                <div ref="humiditypanel" style="width:150px;height: 150px;scale: 1.4;"></div>
+              <div style="display: flex;justify-content: center;align-items: center;margin-top: -20px">
+                <div ref="humiditypanel" style="width:250px;height: 250px;"></div>
               </div>
             </el-card>
             <el-card style="width: 80%;height: 45%;">
-              <div style="display: flex;justify-content: center;align-items: center;margin-top: -60px;">
+              <div style="display: flex;justify-content: center;align-items: center;margin-top: -30px;">
                 <div ref="humidityLineChart" style="width: 1400px;height: 250px;"></div>
               </div>
             </el-card>
@@ -53,12 +55,20 @@
           <el-footer style="height:50%;" class="footer">
             <!-- 这里是日志模块 -->
             <el-card style="width: 70%;height: 100%;">
-              {{ logList }}
+              <el-scrollbar height="200px">
+                <p v-for="item in logList" :key="item.updatedDate" class="scrollbar-demo-item" :class="item.level">
+                  {{formatLog(item)}}
+<!--                  <div>`[{formatDate(new Date(item.updatedDate))}] ${"info".padEnd(5)} {{}}`</div>-->
+<!--                  <div>[{{formatDate(new Date(item.updatedDate))}}]</div>-->
+<!--                  <div style="margin-left: 16px">{{item.level}}</div>-->
+<!--                  <div style="margin-left: 16px">{{item.comment}}</div>-->
+                </p>
+              </el-scrollbar>
             </el-card>
             <!-- 人数 -->
             <el-card style="width: 30%;height: 100%;">
               <div style="display: flex;justify-content: center;align-items: center;margin-top: 40px;">
-                <div ref="peopleNumChart" style="width:250px;height: 250px;scale: 1.3;"></div>
+                <div ref="peopleNumChart" style="width:350px;height: 350px;"></div>
               </div>
             </el-card>
           </el-footer>
@@ -80,6 +90,7 @@ export default {
   // 并且暴露在 `this` 上
   data() {
     return {
+      calen: new Date(),
       tempChart: null,
       humidityChart: null,
       tempLineChart: null,
@@ -95,7 +106,18 @@ export default {
       photourl: [],
       photourlarr: [],
       peoplenum: 0,
-      logList: [],
+      logList: [
+        {
+          updatedDate: Date.now(),
+          level: "info",
+          comment: "皮卡丘钻进了仓库",
+        },
+        {
+          updatedDate: Date.now(),
+          level: "warn",
+          comment: "皮卡丘钻进了仓库",
+        }
+      ],
       carspeed:0,
     }
   },
@@ -107,7 +129,25 @@ export default {
     this.loadData()
     this.myEcharts()
   },
+
   methods: {
+    formatLog(log) {
+      const date = new Date(log.updatedDate).toISOString();
+      const level = log.level.padEnd(5); // 确保日志级别占用5个字符宽度
+      return `[${date}]   ${level}   ${log.comment}`;
+    },
+
+    formatDate(date) {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从0开始
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    },
+
     initCharts() {
       this.tempChart = echarts.init(this.$refs.temppanel);
       this.humidityChart = echarts.init(this.$refs.humiditypanel);
@@ -142,9 +182,9 @@ export default {
       getPeopleNum().then((res) => {
         this.peoplenum = res
       })
-      getlog().then((res) => {
-        this.logList = res
-      })
+      // getlog().then((res) => {
+      //   this.logList = res
+      // })
       getspeed().then((res) => {
         this.carspeed = res.speed
       })
@@ -172,7 +212,7 @@ export default {
             type: 'gauge',
             progress: {
               show: true,
-              width: 12
+              width: 12,
             },
             axisLine: {
               lineStyle: {
@@ -197,7 +237,7 @@ export default {
             anchor: {
               show: true,
               showAbove: true,
-              size: 15,
+              size: 16,
               itemStyle: {
                 borderWidth: 6
               }
@@ -314,7 +354,7 @@ export default {
             axisLabel: {
               distance: -5,
               color: '#999',
-              fontSize: 8
+              fontSize: 12
             },
             anchor: {
               show: false
@@ -328,7 +368,7 @@ export default {
               lineHeight: 20,
               borderRadius: 8,
               offsetCenter: [0, '-10%'],
-              fontSize: 13,
+              fontSize: 20,
               fontWeight: 'bolder',
               formatter: '{value} °C',
               color: 'inherit'
@@ -387,8 +427,8 @@ export default {
             startAngle: 200,
             endAngle: -20,
             min: 0,
-            max: 90,
-            splitNumber: 12,
+            max: 100,
+            splitNumber: 10,
             itemStyle: {
               color: '#B0E0E6'
             },
@@ -423,7 +463,7 @@ export default {
             axisLabel: {
               distance: -5,
               color: '#999',
-              fontSize: 8
+              fontSize: 12
             },
             anchor: {
               show: false
@@ -437,7 +477,7 @@ export default {
               lineHeight: 20,
               borderRadius: 8,
               offsetCenter: [0, '-10%'],
-              fontSize: 13,
+              fontSize: 20,
               fontWeight: 'bolder',
               formatter: '{value} %',
               color: 'inherit'
@@ -635,8 +675,8 @@ export default {
               show: false
             },
             data: [
-              { value: this.peoplenum, name: 'nowpeople', itemStyle: { color: '#FFD700' } },  // 使用 peoplenum 作为值
-              { value: 10 - this.peoplenum, name: 'Direct', itemStyle: { color: '#FF4500' } }  // 假设总数是 10，计算 Direct 的值
+              { value: this.peoplenum, name: 'nowpeople', itemStyle: { color: '#ffe97a' } },  // 使用 peoplenum 作为值
+              { value: 10 - this.peoplenum, name: 'Direct', itemStyle: { color: '#ff8e60' } }  // 假设总数是 10，计算 Direct 的值
             ]
           }
         ]
@@ -675,9 +715,20 @@ export default {
 }
 
 .header {
+  display: flex;
+  justify-content: center;
+  align-content: center;
   height: 10vh;
-  background-color: yellow;
   width: 100%;
+  font-size: 40px;
+  font-family: 阿里妈妈方圆体 VF Regular, sans-serif;
+}
+
+/* 在线链接服务仅供平台体验和调试使用，平台不承诺服务的稳定性，企业客户需下载字体包自行发布使用并做好备份。 */
+@font-face {
+  font-family: "阿里妈妈方圆体 VF Regular";src: url("//at.alicdn.com/wf/webfont/NvHjKPz9AuKF/VYIyKYykcdTe.woff2") format("woff2"),
+url("//at.alicdn.com/wf/webfont/NvHjKPz9AuKF/7LXjWIl4g4Ob.woff") format("woff");
+  font-display: swap;
 }
 
 .aside {
@@ -714,5 +765,24 @@ export default {
   background-color: pink;
   width: 100%;
   height: 25%;
+}
+
+.scrollbar-demo-item {
+  display: flex;
+  align-items: center;
+  justify-content: start;
+  height: 32px;
+  margin: 4px;
+  text-align: center;
+  border-radius: 4px;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.info{
+  background-color: rgba(107, 204, 104, 0.3);
+}
+
+.warn{
+  background-color: rgba(205, 188, 95, 0.3);
 }
 </style>

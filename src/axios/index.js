@@ -5,4 +5,6 @@ const http = axios.create({
     timeout: 2000,
 })
 
+http.ge
+
 export default http
