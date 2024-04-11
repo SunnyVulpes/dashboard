@@ -9,13 +9,8 @@
           <div class="aside-photo">
             <el-card style="width: 100%;">
 
-              <img :src=photourl style="width: 50%;height:250px;" />
-              <img src="https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
-                style="width: 50%" />
-              <img src="https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
-                style="width: 50%" />
-              <img src="https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
-                style="width: 50%;" />
+              <img v-for="item in photourlarr" :src="item" style="width: 50%;height:250px;" />
+
             </el-card>
 
           </div>
