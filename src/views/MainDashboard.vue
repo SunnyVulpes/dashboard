@@ -17,8 +17,8 @@
           <el-card style="width:100%;height: 290px;">
 
             <div style="display: flex;justify-content: center;align-items: center;margin-top: 20px;">
-              <div ref="speedpanel0" style="width:250px;height: 250px;"></div>
-              <div ref="speedpanel1" style="width:250px;height: 250px;"></div>
+              <div ref="speedpanel0" style="width:250px;height: 250px;scale:1.3"></div>
+              <!-- <div ref="speedpanel1" style="width:250px;height: 250px;"></div> -->
             </div>
 
           </el-card>
@@ -50,13 +50,13 @@
           <el-footer style="height:50%;" class="footer">
             <!-- 这里是日志模块 -->
             <el-card style="width: 70%;height: 100%;">
-              <el-scrollbar height="200px">
+              <el-scrollbar height="400px">
                 <p v-for="item in logList" :key="item.updatedDate" class="scrollbar-demo-item" :class="item.level">
-                  {{formatLog(item)}}
-<!--                  <div>`[{formatDate(new Date(item.updatedDate))}] ${"info".padEnd(5)} {{}}`</div>-->
-<!--                  <div>[{{formatDate(new Date(item.updatedDate))}}]</div>-->
-<!--                  <div style="margin-left: 16px">{{item.level}}</div>-->
-<!--                  <div style="margin-left: 16px">{{item.comment}}</div>-->
+                  {{ item.updateTime }}&nbsp&nbsp{{ item.level }}&nbsp&nbsp{{ item.comment }}
+                  <!--                  <div>`[{formatDate(new Date(item.updatedDate))}] ${"info".padEnd(5)} {{}}`</div>-->
+                  <!--                  <div>[{{formatDate(new Date(item.updatedDate))}}]</div>-->
+                  <!--                  <div style="margin-left: 16px">{{item.level}}</div>-->
+                  <!--                  <div style="margin-left: 16px">{{item.comment}}</div>-->
                 </p>
               </el-scrollbar>
             </el-card>
@@ -74,9 +74,9 @@
 </template>
 <script>
 import * as echarts from "echarts";
-import { getspeed,getTempList, getCurTemp, getHumidityList, getCurHumidity, countPeople, getPhotoUrl, getPhotoUrl_4, getPeopleNum, getlog } from '../axios/api/api.js'
+import { setphones,getphones, getspeed, getTempList, getCurTemp, getHumidityList, getCurHumidity, countPeople, getPhotoUrl, getPhotoUrl_4, getPeopleNum, getlog } from '../axios/api/api.js'
 import Temp from "@/components/temp.vue";
-import { ElDatePicker } from "element-plus";
+import { ElDatePicker, alertProps } from "element-plus";
 
 export default {
   name: "MainDashboard",
@@ -101,31 +101,29 @@ export default {
       photourl: [],
       photourlarr: [],
       peoplenum: 0,
-      logList: [
-        {
-          updatedDate: Date.now(),
-          level: "info",
-          comment: "皮卡丘钻进了仓库",
-        },
-        {
-          updatedDate: Date.now(),
-          level: "warn",
-          comment: "皮卡丘钻进了仓库",
-        }
-      ],
-      carspeed:0,
+      logList: [],
+      carspeed: 0,
+      isp: false
     }
   },
 
   // methods 是一些用来更改状态与触发更新的函数
   // 它们可以在模板中作为事件处理器绑定
   mounted() {
+    let that = this
     this.initCharts()
     this.loadData()
     this.myEcharts()
+    var intervalId = setInterval(function () {
+      that.loadData()
+    }, 1000);
+
   },
 
   methods: {
+    getphonestatus() {
+
+    },
     formatLog(log) {
       const date = new Date(log.updatedDate).toISOString();
       const level = log.level.padEnd(5); // 确保日志级别占用5个字符宽度
@@ -150,7 +148,7 @@ export default {
       this.humidityLineChart = echarts.init(this.$refs.humidityLineChart);
       this.peopleNumChart = echarts.init(this.$refs.peopleNumChart);
       this.myChart0 = echarts.init(this.$refs.speedpanel0);
-      this.myChart1 = echarts.init(this.$refs.speedpanel1);
+      // this.myChart1 = echarts.init(this.$refs.speedpanel1);
     },
     loadData() {
       getTempList().then((res) => {
@@ -168,9 +166,9 @@ export default {
       countPeople().then((res) => {
         this.countpeople = res
       })
-      getPhotoUrl().then((res) => {
-        this.photourl = res
-      })
+      // getPhotoUrl().then((res) => {
+      //   this.photourl = res
+      // })
       getPhotoUrl_4().then((res) => {
         this.photourlarr = res
       })
@@ -183,6 +181,22 @@ export default {
       getspeed().then((res) => {
         this.carspeed = res.speed
       })
+      getlog().then((res) => {
+        this.logList = res
+      })
+      getphones().then((res) => {
+        if (res == true) {
+          this.isp = true
+          console.log(1)
+        }
+
+      })
+      if (this.isp==true){
+        this.isp=false
+        alert("发现手机")
+        setphones()
+      }
+
     },
     myEcharts() {
       // 基于准备好的dom，初始化echarts实例
@@ -253,58 +267,58 @@ export default {
           }
         ]
       });
-      this.myChart1.setOption({
-        series: [
-          {
-            type: 'gauge',
-            progress: {
-              show: true,
-              width: 12
-            },
-            axisLine: {
-              lineStyle: {
-                width: 12
-              }
-            },
-            axisTick: {
-              show: false
-            },
-            splitLine: {
-              length: 10,
-              lineStyle: {
-                width: 1.5,
-                color: '#999'
-              }
-            },
-            axisLabel: {
-              distance: 15,
-              color: '#999',
-              fontSize: 12
-            },
-            anchor: {
-              show: true,
-              showAbove: true,
-              size: 15,
-              itemStyle: {
-                borderWidth: 6
-              }
-            },
-            title: {
-              show: false
-            },
-            detail: {
-              valueAnimation: true,
-              fontSize: 18,
-              offsetCenter: [0, '50%']
-            },
-            data: [
-              {
-                value: this.curTemp
-              }
-            ]
-          }
-        ]
-      });
+      // this.myChart1.setOption({
+      //   series: [
+      //     {
+      //       type: 'gauge',
+      //       progress: {
+      //         show: true,
+      //         width: 12
+      //       },
+      //       axisLine: {
+      //         lineStyle: {
+      //           width: 12
+      //         }
+      //       },
+      //       axisTick: {
+      //         show: false
+      //       },
+      //       splitLine: {
+      //         length: 10,
+      //         lineStyle: {
+      //           width: 1.5,
+      //           color: '#999'
+      //         }
+      //       },
+      //       axisLabel: {
+      //         distance: 15,
+      //         color: '#999',
+      //         fontSize: 12
+      //       },
+      //       anchor: {
+      //         show: true,
+      //         showAbove: true,
+      //         size: 15,
+      //         itemStyle: {
+      //           borderWidth: 6
+      //         }
+      //       },
+      //       title: {
+      //         show: false
+      //       },
+      //       detail: {
+      //         valueAnimation: true,
+      //         fontSize: 18,
+      //         offsetCenter: [0, '50%']
+      //       },
+      //       data: [
+      //         {
+      //           value: this.curTemp
+      //         }
+      //       ]
+      //     }
+      //   ]
+      // });
       this.tempChart.setOption({
         series: [
           {
@@ -721,8 +735,9 @@ export default {
 
 /* 在线链接服务仅供平台体验和调试使用，平台不承诺服务的稳定性，企业客户需下载字体包自行发布使用并做好备份。 */
 @font-face {
-  font-family: "阿里妈妈方圆体 VF Regular";src: url("//at.alicdn.com/wf/webfont/NvHjKPz9AuKF/VYIyKYykcdTe.woff2") format("woff2"),
-url("//at.alicdn.com/wf/webfont/NvHjKPz9AuKF/7LXjWIl4g4Ob.woff") format("woff");
+  font-family: "阿里妈妈方圆体 VF Regular";
+  src: url("//at.alicdn.com/wf/webfont/NvHjKPz9AuKF/VYIyKYykcdTe.woff2") format("woff2"),
+    url("//at.alicdn.com/wf/webfont/NvHjKPz9AuKF/7LXjWIl4g4Ob.woff") format("woff");
   font-display: swap;
 }
 
@@ -773,11 +788,11 @@ url("//at.alicdn.com/wf/webfont/NvHjKPz9AuKF/7LXjWIl4g4Ob.woff") format("woff");
   font-family: 'Courier New', Courier, monospace;
 }
 
-.info{
+.info {
   background-color: rgba(107, 204, 104, 0.3);
 }
 
-.warn{
+.warn {
   background-color: rgba(205, 188, 95, 0.3);
 }
 </style>

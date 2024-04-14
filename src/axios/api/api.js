@@ -67,6 +67,8 @@ export async function getPhotoUrl() {
 export async function getPhotoUrl_4() {
     try {
         const res = await http.get("/api/photo/geturl")
+        res.data = res.data.map(item => "/api/photo/getbyurl?url=" + item);
+        console.log(res.data)
         return res.data
     }catch (err) {
         console.log(err)
@@ -87,6 +89,7 @@ export async function getPeopleNum() {
 export async function getlog() {
     try {
         const res = await http.get("/api/log/get")
+        console.log(res.data.data)
         return res.data.data
     }catch (err) {
         console.log(err)
@@ -103,3 +106,28 @@ export async function getspeed() {
         throw err
     }
 }
+
+export async function getphones() {
+    try {
+        const res = await http.get("/api/phone/get")
+        console.log(res.data.data)
+        return res.data.data
+    }catch (err) {
+        console.log(err)
+        throw err
+    }
+}
+
+export async function setphones() {
+    try {
+        const res = await http.get("/api/phone/put?isexist=false")
+        return res.data.data
+    }catch (err) {
+        console.log(err)
+        throw err
+    }
+}
+
+
+
+
